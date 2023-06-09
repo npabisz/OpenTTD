@@ -345,6 +345,14 @@ struct GameCreationSettings {
 	byte   min_river_length;                 ///< the minimum river length
 	byte   river_route_random;               ///< the amount of randomicity for the route finding
 	byte   amount_of_rivers;                 ///< the amount of rivers
+	bool   freely_forests_placement;         ///< allow freely forests placement
+	bool   freely_oil_placement;             ///< allow freely oil refineries placement
+	bool   freely_oil_rigs_placement;        ///< allow freely oil rigs placement
+	bool   freely_farms_placement;           ///< allow freely farms placement
+	bool   freely_plantations_placement;     ///< allow freely plantations placement
+	bool   freely_water_placement;           ///< allow freely water supply placement
+	bool   freely_lumbermills_placement;     ///< allow freely lumbermills placement
+	bool   freely_bubble_gen_placement;      ///< allow freely bubble generators placement
 };
 
 /** Settings related to construction in-game */

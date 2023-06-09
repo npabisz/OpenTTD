@@ -1234,6 +1234,10 @@ static CommandCost CheckNewIndustry_NULL(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_Forest(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_forests_placement) {
+		return CommandCost();
+	}
+
 	if (_settings_game.game_creation.landscape == LT_ARCTIC) {
 		if (GetTileZ(tile) < HighestSnowLine() + 2) {
 			return_cmd_error(STR_ERROR_FOREST_CAN_ONLY_BE_PLANTED);
@@ -1274,6 +1278,10 @@ static CommandCost CheckNewIndustry_OilRefinery(TileIndex tile)
 {
 	if (_game_mode == GM_EDITOR) return CommandCost();
 
+	if (_settings_game.game_creation.freely_oil_placement) {
+		return CommandCost();
+	}
+
 	if (CheckScaledDistanceFromEdge(TILE_ADDXY(tile, 1, 1), _settings_game.game_creation.oil_refinery_limit)) return CommandCost();
 
 	return_cmd_error(STR_ERROR_CAN_ONLY_BE_POSITIONED);
@@ -1290,6 +1298,10 @@ static CommandCost CheckNewIndustry_OilRig(TileIndex tile)
 {
 	if (_game_mode == GM_EDITOR && _ignore_restrictions) return CommandCost();
 
+	if (TileHeight(tile) == 0 && _settings_game.game_creation.freely_oil_rigs_placement) {
+		return CommandCost();
+	}
+
 	if (TileHeight(tile) == 0 &&
 			CheckScaledDistanceFromEdge(TILE_ADDXY(tile, 1, 1), _settings_game.game_creation.oil_refinery_limit)) return CommandCost();
 
@@ -1303,6 +1315,10 @@ static CommandCost CheckNewIndustry_OilRig(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_Farm(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_farms_placement) {
+		return CommandCost();
+	}
+
 	if (_settings_game.game_creation.landscape == LT_ARCTIC) {
 		if (GetTileZ(tile) + 2 >= HighestSnowLine()) {
 			return_cmd_error(STR_ERROR_SITE_UNSUITABLE);
@@ -1318,6 +1334,10 @@ static CommandCost CheckNewIndustry_Farm(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_Plantation(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_plantations_placement) {
+		return CommandCost();
+	}
+
 	if (GetTropicZone(tile) == TROPICZONE_DESERT) {
 		return_cmd_error(STR_ERROR_SITE_UNSUITABLE);
 	}
@@ -1331,6 +1351,10 @@ static CommandCost CheckNewIndustry_Plantation(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_Water(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_water_placement) {
+		return CommandCost();
+	}
+
 	if (GetTropicZone(tile) != TROPICZONE_DESERT) {
 		return_cmd_error(STR_ERROR_CAN_ONLY_BE_BUILT_IN_DESERT);
 	}
@@ -1344,6 +1368,10 @@ static CommandCost CheckNewIndustry_Water(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_Lumbermill(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_lumbermills_placement) {
+		return CommandCost();
+	}
+
 	if (GetTropicZone(tile) != TROPICZONE_RAINFOREST) {
 		return_cmd_error(STR_ERROR_CAN_ONLY_BE_BUILT_IN_RAINFOREST);
 	}
@@ -1357,6 +1385,10 @@ static CommandCost CheckNewIndustry_Lumbermill(TileIndex tile)
  */
 static CommandCost CheckNewIndustry_BubbleGen(TileIndex tile)
 {
+	if (_settings_game.game_creation.freely_bubble_gen_placement) {
+		return CommandCost();
+	}
+
 	if (GetTileZ(tile) > 4) {
 		return_cmd_error(STR_ERROR_CAN_ONLY_BE_BUILT_IN_LOW_AREAS);
 	}

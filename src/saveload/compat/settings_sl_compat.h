@@ -261,6 +261,14 @@ const SaveLoadCompat _settings_sl_compat[] = {
 	SLC_VAR("locale.digit_group_separator"),
 	SLC_VAR("locale.digit_group_separator_currency"),
 	SLC_VAR("locale.digit_decimal_separator"),
+	SLC_VAR("game_creation.freely_forests_placement"),
+	SLC_VAR("game_creation.freely_oil_placement"),
+	SLC_VAR("game_creation.freely_oil_rigs_placement"),
+	SLC_VAR("game_creation.freely_farms_placement"),
+	SLC_VAR("game_creation.freely_plantations_placement"),
+	SLC_VAR("game_creation.freely_water_placement"),
+	SLC_VAR("game_creation.freely_lumbermills_placement"),
+	SLC_VAR("game_creation.freely_bubble_gen_placement"),
 };
 
 #endif /* SAVELOAD_COMPAT_SETTINGS_H */

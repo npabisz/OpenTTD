@@ -1484,6 +1484,23 @@ STR_CONFIG_SETTING_INDUSTRY_DENSITY_HELPTEXT                    :Set how many in
 STR_CONFIG_SETTING_OIL_REF_EDGE_DISTANCE                        :Maximum distance from edge for Oil industries: {STRING2}
 STR_CONFIG_SETTING_OIL_REF_EDGE_DISTANCE_HELPTEXT               :Limit for how far from the map border oil refineries and oil rigs can be constructed. On island maps this ensures they are near the coast. On maps larger than 256 tiles, this value is scaled up.
 
+STR_CONFIG_SETTING_FREELY_FORESTS_PLACEMENT                     :Allow freely forest placement
+STR_CONFIG_SETTING_FREELY_FORESTS_PLACEMENT_HELPTEXT            :Allows to place forests regardless of limitations
+STR_CONFIG_SETTING_FREELY_OIL_PLACEMENT                         :Allow freely oil refineries placement
+STR_CONFIG_SETTING_FREELY_OIL_PLACEMENT_HELPTEXT                :Allows to place oil refineries regardless of limitations
+STR_CONFIG_SETTING_FREELY_OIL_RIGS_PLACEMENT                    :Allow freely oil rigs placement
+STR_CONFIG_SETTING_FREELY_OIL_RIGS_PLACEMENT_HELPTEXT           :Allows to place oil rigs regardless of limitations
+STR_CONFIG_SETTING_FREELY_FARMS_PLACEMENT                       :Allow freely farms placement
+STR_CONFIG_SETTING_FREELY_FARMS_PLACEMENT_HELPTEXT              :Allows to place farms regardless of limitations
+STR_CONFIG_SETTING_FREELY_PLANTATIONS_PLACEMENT                 :Allow freely plantations placement
+STR_CONFIG_SETTING_FREELY_PLANTATIONS_PLACEMENT_HELPTEXT        :Allows to place plantations regardless of limitations
+STR_CONFIG_SETTING_FREELY_WATER_PLACEMENT                       :Allow freely water supply placement
+STR_CONFIG_SETTING_FREELY_WATER_PLACEMENT_HELPTEXT              :Allows to place water supply regardless of limitations
+STR_CONFIG_SETTING_FREELY_LUMBERMILLS_PLACEMENT                 :Allow freely lumbermills placement
+STR_CONFIG_SETTING_FREELY_LUMBERMILLS_PLACEMENT_HELPTEXT        :Allows to place lumbermills regardless of limitations
+STR_CONFIG_SETTING_FREELY_BUBBLE_GEN_PLACEMENT                  :Allow freely bubble generator placement
+STR_CONFIG_SETTING_FREELY_BUBBLE_GEN_PLACEMENT_HELPTEXT         :Allows to place bubble generator regardless of limitations
+
 STR_CONFIG_SETTING_SNOWLINE_HEIGHT                              :Snow line height: {STRING2}
 STR_CONFIG_SETTING_SNOWLINE_HEIGHT_HELPTEXT                     :Controls at what height snow starts in sub-arctic landscape. Snow also affects industry generation and town growth requirements. Can only be modified via Scenario Editor or is otherwise calculated via "snow coverage"
 
