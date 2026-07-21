@@ -2427,6 +2427,11 @@ STR_NETWORK_SERVER_LIST_CAPTION                                 :{WHITE}Multipla
 STR_NETWORK_SERVER_LIST_PLAYER_NAME                             :{BLACK}Player name:
 STR_NETWORK_SERVER_LIST_ENTER_NAME_TOOLTIP                      :{BLACK}This is the name other players will identify you by
 
+STR_NETWORK_SERVER_LIST_FAVOURITE_TOOLTIP                       :{BLACK}Favourite servers{}Click to sort by favourite
+STR_NETWORK_SERVER_LIST_ADD_FAVOURITE                           :{BLACK}Add to favourites
+STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE                        :{BLACK}Remove from favourites
+STR_NETWORK_SERVER_LIST_FAVOURITE_BUTTON_TOOLTIP                :{BLACK}Add or remove the selected server from favourites
+STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE_CONFIRMATION           :{BLACK}Remove "{RAW_STRING}" from favourites?
 STR_NETWORK_SERVER_LIST_GAME_NAME                               :{BLACK}Name
 STR_NETWORK_SERVER_LIST_GAME_NAME_TOOLTIP                       :{BLACK}Name of the game
 STR_NETWORK_SERVER_LIST_GENERAL_ONLINE                          :{BLACK}{COMMA}/{COMMA} - {COMMA}/{COMMA}

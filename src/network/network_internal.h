@@ -85,6 +85,7 @@ void NetworkQueryServer(std::string_view connection_string);
 void GetBindAddresses(NetworkAddressList *addresses, uint16_t port);
 struct NetworkGame *NetworkAddServer(std::string_view connection_string, bool manually = true, bool never_expire = false);
 void NetworkRebuildHostList();
+void NetworkRebuildFavouriteList();
 void UpdateNetworkGameWindow();
 
 /* From network_command.cpp */

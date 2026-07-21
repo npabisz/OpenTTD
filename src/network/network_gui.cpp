@@ -94,6 +94,8 @@ public:
 	/** Create the header. */
 	NWidgetServerListHeader() : NWidgetContainer(NWID_HORIZONTAL)
 	{
+		this->Add(std::make_unique<NWidgetLeaf>(WWT_PUSHTXTBTN, Colours::White, WID_NG_FAVOURITE, WidgetData{.string = STR_EMPTY}, STR_NETWORK_SERVER_LIST_FAVOURITE_TOOLTIP));
+
 		auto leaf = std::make_unique<NWidgetLeaf>(WWT_PUSHTXTBTN, Colours::White, WID_NG_NAME, WidgetData{.string = STR_NETWORK_SERVER_LIST_GAME_NAME}, STR_NETWORK_SERVER_LIST_GAME_NAME_TOOLTIP);
 		leaf->SetResize(1, 0);
 		leaf->SetFill(1, 0);
@@ -129,7 +131,7 @@ public:
 			child_wid->current_y = this->smallest_y;
 		}
 
-		this->smallest_x = this->children.front()->smallest_x + this->children.back()->smallest_x; // First and last are always shown, rest not
+		this->smallest_x = this->children.front()->smallest_x + (*std::next(this->children.begin()))->smallest_x + this->children.back()->smallest_x; // Favourite, name and info are always shown.
 		this->ApplyAspectRatio();
 	}
 
@@ -142,10 +144,10 @@ public:
 		this->current_x = given_width;
 		this->current_y = given_height;
 
-		given_width -= this->children.back()->smallest_x;
-		/* The first and last widget are always visible, determine which other should be visible */
-		if (this->children.size() > 2) {
-			auto first = std::next(std::begin(this->children));
+		given_width -= this->children.front()->smallest_x + this->children.back()->smallest_x;
+		/* Favourite, name and info are always visible; determine which other columns should be visible. */
+		if (this->children.size() > 3) {
+			auto first = std::next(std::begin(this->children), 2);
 			auto last = std::prev(std::end(this->children));
 			for (auto it = first; it != last; ++it) {
 				auto &child_wid = *it;
@@ -158,8 +160,8 @@ public:
 			}
 		}
 
-		/* All remaining space goes to the first (name) widget */
-		this->children.front()->current_x = given_width;
+		/* All remaining space goes to the name widget. */
+		(*std::next(this->children.begin()))->current_x = given_width;
 
 		/* Now assign the widgets to their rightful place */
 		uint position = 0; // Place to put next child relative to origin of the container.
@@ -197,6 +199,7 @@ protected:
 	QueryString name_editbox; ///< Client name editbox.
 	QueryString filter_editbox; ///< Editbox for filter on servers.
 	bool searched_internet = false; ///< Did we ever press "Search Internet" button?
+	std::string favourite_query_server{}; ///< Connection string of the server in the pending favourite confirmation.
 
 	Dimension lock{}; ///< Dimension of lock icon.
 	Dimension blot{}; ///< Dimension of compatibility icon.
@@ -325,10 +328,86 @@ protected:
 		return (r != 0) ? r < 0 : NGameClientSorter(b, a);
 	}
 
+	/** Sort favourite servers first, then by joinability. @copydoc GUIList::Sorter */
+	static bool NGameFavouriteSorter(NetworkGame * const &a, NetworkGame * const &b)
+	{
+		if (a->favourite != b->favourite) return a->favourite > b->favourite;
+		return NGameAllowedSorter(a, b);
+	}
+
 	/** Sort the server list */
 	void SortNetworkGameList()
 	{
 		if (this->servers.Sort()) this->UpdateListPos();
+	}
+
+	/**
+	 * Change the favourite state of a server and update the list.
+	 * @param game Server to update.
+	 * @param favourite New favourite state.
+	 */
+	void SetFavourite(NetworkGame *game, bool favourite)
+	{
+		if (game == nullptr || game->favourite == favourite) return;
+
+		game->favourite = favourite;
+
+		/* Expired non-manual servers are only retained while they are favourites. */
+		if (!game->favourite && !game->manually && game->version < _network_game_list_version) {
+			if (this->server == game) {
+				this->server = nullptr;
+				this->list_pos = SLP_INVALID;
+			}
+			if (this->last_joined == game) this->last_joined = nullptr;
+
+			NetworkGameListRemoveItem(game);
+			return;
+		}
+
+		NetworkRebuildFavouriteList();
+
+		if (this->servers.SortType() == 0) {
+			this->servers.ForceResort();
+			this->SortNetworkGameList();
+			this->ScrollToSelectedServer();
+		}
+		this->SetDirty();
+	}
+
+	/**
+	 * Apply a favourite removal requested by a confirmation dialog.
+	 * @param confirmed True if the removal was confirmed.
+	 */
+	void ConfirmFavouriteRemoval(bool confirmed)
+	{
+		if (confirmed) {
+			auto it = std::ranges::find(_network_game_list, this->favourite_query_server, [](const auto &game) -> const std::string & { return game->connection_string; });
+			if (it != std::end(_network_game_list)) this->SetFavourite(it->get(), false);
+		}
+		this->favourite_query_server.clear();
+	}
+
+	/**
+	 * Add a server to favourites, or ask for confirmation before removing it.
+	 * @param game Server to toggle the favourite state of.
+	 */
+	void ToggleFavourite(NetworkGame *game)
+	{
+		if (game == nullptr) return;
+
+		if (!game->favourite) {
+			this->SetFavourite(game, true);
+			return;
+		}
+
+		this->favourite_query_server = game->connection_string;
+		ShowQuery(
+			GetEncodedString(STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE),
+			GetEncodedString(STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE_CONFIRMATION, game->info.server_name),
+			this,
+			[](Window *window, bool confirmed) {
+				static_cast<NetworkGameWindow *>(window)->ConfirmFavouriteRemoval(confirmed);
+			});
 	}
 
 	/** Set this->list_pos to match this->server */
@@ -361,14 +440,20 @@ protected:
 	 */
 	void DrawServerLine(const NetworkGame *cur_item, int y, bool highlight) const
 	{
+		Rect favourite = this->GetWidget<NWidgetBase>(WID_NG_FAVOURITE)->GetCurrentRect();
 		Rect name = this->GetWidget<NWidgetBase>(WID_NG_NAME)->GetCurrentRect();
 		Rect info = this->GetWidget<NWidgetBase>(WID_NG_INFO)->GetCurrentRect();
 
 		/* show highlighted item with a different colour */
 		if (highlight) {
-			Rect r = {std::min(name.left, info.left), y, std::max(name.right, info.right), y + (int)this->resize.step_height - 1};
+			Rect r = {std::min(favourite.left, info.left), y, std::max(favourite.right, info.right), y + (int)this->resize.step_height - 1};
 			GfxFillRect(r.Shrink(WidgetDimensions::scaled.bevel), PC_GREY);
 		}
+
+		favourite.top = y;
+		favourite.bottom = y + this->resize.step_height - 1;
+		favourite = favourite.Translate((_current_text_dir == TD_RTL ? -1 : 1) * ScaleGUITrad(1), 0);
+		DrawSpriteIgnorePadding(cur_item->favourite ? SPR_FAVOURITE : SPR_FAVOURITE_INACTIVE, PAL_NONE, favourite, {AlignmentH::Centre, AlignmentV::Middle});
 
 		/* Offset to vertically position text. */
 		int text_y_offset = WidgetDimensions::scaled.matrix.top + (this->resize.step_height - WidgetDimensions::scaled.matrix.Vertical() - GetCharacterHeight(FontSize::Normal)) / 2;
@@ -503,6 +588,10 @@ public:
 				size.width = NWidgetScrollbar::GetVerticalDimension().width;
 				break;
 
+			case WID_NG_FAVOURITE:
+				size.width = std::max<uint>(GetScaledSpriteSize(SPR_FAVOURITE).width, Window::SortButtonWidth()) + WidgetDimensions::scaled.bevel.Horizontal();
+				break;
+
 			case WID_NG_NAME:
 				size.width += 2 * Window::SortButtonWidth(); // Make space for the arrow
 				break;
@@ -559,13 +648,15 @@ public:
 				this->DrawDetails(r);
 				break;
 
+			case WID_NG_FAVOURITE:
+				[[fallthrough]];
 			case WID_NG_NAME:
 			case WID_NG_CLIENTS:
 			case WID_NG_MAPSIZE:
 			case WID_NG_DATE:
 			case WID_NG_YEARS:
 			case WID_NG_INFO:
-				if (widget - WID_NG_NAME == this->servers.SortType()) this->DrawSortButton(widget, this->servers.IsDescSortOrder());
+				if (widget - WID_NG_FAVOURITE == this->servers.SortType()) this->DrawSortButton(widget, this->servers.IsDescSortOrder());
 				break;
 		}
 	}
@@ -581,6 +672,10 @@ public:
 		}
 
 		NetworkGame *sel = this->server;
+		this->SetWidgetDisabledState(WID_NG_FAVOURITE_BUTTON, sel == nullptr);
+		this->GetWidget<NWidgetCore>(WID_NG_FAVOURITE_BUTTON)->SetStringTip(
+				sel != nullptr && sel->favourite ? STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE : STR_NETWORK_SERVER_LIST_ADD_FAVOURITE,
+				STR_NETWORK_SERVER_LIST_FAVOURITE_BUTTON_TOOLTIP);
 		/* 'Refresh' button invisible if no server selected */
 		this->SetWidgetDisabledState(WID_NG_REFRESH, sel == nullptr);
 		/* 'Join' button disabling conditions */
@@ -693,17 +788,18 @@ public:
 	void OnClick([[maybe_unused]] Point pt, WidgetID widget, [[maybe_unused]] int click_count) override
 	{
 		switch (widget) {
+			case WID_NG_FAVOURITE: // Sort by favourite
 			case WID_NG_NAME:    // Sort by name
 			case WID_NG_CLIENTS: // Sort by connected clients
 			case WID_NG_MAPSIZE: // Sort by map size
 			case WID_NG_DATE:    // Sort by date
 			case WID_NG_YEARS:   // Sort by years
 			case WID_NG_INFO:    // Connectivity (green dot)
-				if (this->servers.SortType() == widget - WID_NG_NAME) {
+				if (this->servers.SortType() == widget - WID_NG_FAVOURITE) {
 					this->servers.ToggleSortOrder();
 					if (this->list_pos != SLP_INVALID) this->list_pos = (ServerListPosition)this->servers.size() - this->list_pos - 1;
 				} else {
-					this->servers.SetSortType(widget - WID_NG_NAME);
+					this->servers.SetSortType(widget - WID_NG_FAVOURITE);
 					this->servers.ForceResort();
 					this->SortNetworkGameList();
 				}
@@ -713,6 +809,11 @@ public:
 
 			case WID_NG_MATRIX: { // Show available network games
 				auto it = this->vscroll->GetScrolledItemFromWidget(this->servers, pt.y, this, WID_NG_MATRIX);
+				const Rect favourite = this->GetWidget<NWidgetBase>(WID_NG_FAVOURITE)->GetCurrentRect();
+				if (it != this->servers.end() && pt.x >= favourite.left && pt.x <= favourite.right) {
+					this->ToggleFavourite(*it);
+					break;
+				}
 				this->server = (it != this->servers.end()) ? *it : nullptr;
 				this->list_pos = (server == nullptr) ? SLP_INVALID : it - this->servers.begin();
 				this->SetDirty();
@@ -764,6 +865,10 @@ public:
 
 			case WID_NG_REFRESH: // Refresh
 				if (this->server != nullptr && !this->server->refreshing) NetworkQueryServer(this->server->connection_string);
+				break;
+
+			case WID_NG_FAVOURITE_BUTTON:
+				this->ToggleFavourite(this->server);
 				break;
 
 			case WID_NG_NEWGRF: // NewGRF Settings
@@ -858,8 +963,9 @@ public:
 	}};
 };
 
-Listing NetworkGameWindow::last_sorting = {false, 5};
+Listing NetworkGameWindow::last_sorting = {false, 0};
 const std::initializer_list<GUIGameServerList::SortFunction * const> NetworkGameWindow::sorter_funcs = {
+	&NGameFavouriteSorter,
 	&NGameNameSorter,
 	&NGameClientSorter,
 	&NGameMapSizeSorter,
@@ -920,6 +1026,7 @@ static constexpr std::initializer_list<NWidgetPart> _nested_network_game_widgets
 						NWidget(WWT_PANEL, Colours::LightBlue, WID_NG_DETAILS), SetMinimalSize(140, 0), SetMinimalTextLines(15, 0), SetResize(0, 1),
 						EndContainer(),
 						NWidget(NWID_VERTICAL, NWidContainerFlag::EqualSize),
+							NWidget(WWT_PUSHTXTBTN, Colours::White, WID_NG_FAVOURITE_BUTTON), SetFill(1, 0), SetStringTip(STR_NETWORK_SERVER_LIST_REMOVE_FAVOURITE, STR_NETWORK_SERVER_LIST_FAVOURITE_BUTTON_TOOLTIP),
 							NWidget(NWID_SELECTION, Colours::Invalid, WID_NG_NEWGRF_MISSING_SEL),
 								NWidget(WWT_PUSHTXTBTN, Colours::White, WID_NG_NEWGRF_MISSING), SetFill(1, 0), SetStringTip(STR_NEWGRF_SETTINGS_FIND_MISSING_CONTENT_BUTTON, STR_NEWGRF_SETTINGS_FIND_MISSING_CONTENT_TOOLTIP),
 							EndContainer(),
@@ -970,6 +1077,9 @@ void ShowNetworkGameWindow()
 		/* Add all servers from the config file to our list. */
 		for (const auto &iter : _network_host_list) {
 			NetworkAddServer(iter);
+		}
+		for (const auto &iter : _network_favourite_list) {
+			NetworkAddServer(iter, false)->favourite = true;
 		}
 	}
 

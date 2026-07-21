@@ -35,6 +35,7 @@ struct NetworkGame {
 	std::string connection_string;           ///< Address of the server.
 	NetworkGameStatus status = NetworkGameStatus::Offline; ///< Stats of the server.
 	bool manually = false;                   ///< True if the server was added manually.
+	bool favourite = false;                  ///< True if the server was marked as a favourite.
 	bool refreshing = false;                 ///< Whether this server is being queried.
 	int version = 0;                         ///< Used to see which servers are no longer available on the Game Coordinator and can be removed.
 };

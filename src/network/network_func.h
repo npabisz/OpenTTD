@@ -30,6 +30,7 @@ extern ClientID _redirect_console_to_client;
 extern uint8_t _network_reconnect;
 extern StringList _network_bind_list;
 extern StringList _network_host_list;
+extern StringList _network_favourite_list;
 extern StringList _network_ban_list;
 
 uint8_t NetworkSpectatorCount();

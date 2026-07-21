@@ -74,6 +74,7 @@ ClientID _redirect_console_to_client; ///< If not invalid, redirect the console 
 uint8_t _network_reconnect;             ///< Reconnect timeout
 StringList _network_bind_list;        ///< The addresses to bind on.
 StringList _network_host_list;        ///< The servers we know.
+StringList _network_favourite_list;   ///< The servers marked as favourites.
 StringList _network_ban_list;         ///< The banned clients.
 uint32_t _frame_counter_server;         ///< The frame_counter of the server, if in network-mode
 uint32_t _frame_counter_max;            ///< To where we may go with our clients
@@ -756,6 +757,18 @@ void NetworkRebuildHostList()
 
 	for (const auto &item : _network_game_list) {
 		if (item->manually) _network_host_list.emplace_back(item->connection_string);
+	}
+}
+
+/**
+ * Generates the list of favourite servers from NetworkGame for the config file.
+ */
+void NetworkRebuildFavouriteList()
+{
+	_network_favourite_list.clear();
+
+	for (const auto &item : _network_game_list) {
+		if (item->favourite) _network_favourite_list.emplace_back(item->connection_string);
 	}
 }
 

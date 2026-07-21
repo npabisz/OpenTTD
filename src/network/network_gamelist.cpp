@@ -53,6 +53,7 @@ void NetworkGameListRemoveItem(NetworkGame *remove)
 		_network_game_list.erase(it);
 
 		NetworkRebuildHostList();
+		NetworkRebuildFavouriteList();
 		UpdateNetworkGameWindow();
 	}
 }
@@ -64,7 +65,13 @@ void NetworkGameListRemoveItem(NetworkGame *remove)
  */
 void NetworkGameListRemoveExpired()
 {
-	auto it = std::remove_if(std::begin(_network_game_list), std::end(_network_game_list), [](const auto &item) { return !item->manually && item->version < _network_game_list_version; });
+	for (const auto &item : _network_game_list) {
+		if (!item->manually && item->favourite && item->version < _network_game_list_version) {
+			item->status = NetworkGameStatus::Offline;
+		}
+	}
+
+	auto it = std::remove_if(std::begin(_network_game_list), std::end(_network_game_list), [](const auto &item) { return !item->manually && !item->favourite && item->version < _network_game_list_version; });
 	_network_game_list.erase(it, std::end(_network_game_list));
 
 	UpdateNetworkGameWindow();
